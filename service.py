@@ -1,3 +1,5 @@
+import logging
+
 from ollama import OllamaModelForDisease
 import mongodbrepo
 
@@ -22,8 +24,11 @@ def __fetch_disease_details_from_llm(disease_name: str):
 
 
 def __fetch_disease_details_from_db(disease_name, disease_type):
-    for record in mongodbrepo.fetch_from_db(
-            {'$and': [{'disease_name': disease_name}, {'disease_type': disease_type}]}):
+    db_response = mongodbrepo.fetch_from_db(
+            {'$and': [{'disease_name': disease_name}, {'disease_type': disease_type}]})
+    print(f'DB Response: {db_response}')
+    logging.info(f'DB Response: {db_response}')
+    for record in db_response:
         return record
 
 
@@ -42,13 +47,27 @@ def __insert_disease_details_in_db(disease_name, disease_type, causes, symptoms,
 
 
 def fetch_disease_details(disease_name, disease_type):
+    print(f'Fetching disease details from db: {disease_name}')
+    logging.info(f'Fetching disease details from db: {disease_name}')
+
     db_result = __fetch_disease_details_from_db(disease_name, disease_type)
     if not db_result:
-        causes, symptoms, remedies, harmful_foods, beneficial_foods = __fetch_disease_details_from_llm(disease_name)
-        __insert_disease_details_in_db(disease_name, disease_type, causes, symptoms, remedies, harmful_foods,
-                                       beneficial_foods)
-        return {'disease_name': disease_name, 'disease_type': disease_type, 'causes': causes, 'symptoms': symptoms,
-                'remedies': remedies, 'harmful_foods': harmful_foods, 'beneficial_foods': beneficial_foods}
+            try:
+                causes, symptoms, remedies, harmful_foods, beneficial_foods = __fetch_disease_details_from_llm(disease_name)
+            except Exception as e:
+                print(f'Exception in fetching disease details from llm: {str(e)}')
+                logging.info(f'Exception in fetching disease details from llm: {str(e)}')
+
+            try:
+                __insert_disease_details_in_db(disease_name, disease_type, causes, symptoms, remedies, harmful_foods,
+                                           beneficial_foods)
+            except Exception as e:
+                print(f'Exception in inserting disease details in db: {str(e)}')
+                logging.info(f'Exception in inserting disease details in db: {str(e)}')
+            return {'disease_name': disease_name, 'disease_type': disease_type, 'causes': causes, 'symptoms': symptoms,
+                    'remedies': remedies, 'harmful_foods': harmful_foods, 'beneficial_foods': beneficial_foods}
     else:
+        print(f'Found result in db for {disease_name} {db_result}')
+        logging.info(f'Found result in db for {disease_name} {db_result}')
         db_result.pop('_id')
         return db_result

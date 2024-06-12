@@ -47,12 +47,14 @@ if find:
     data = json.dumps({"disease_name": disease_name.lower(), "disease_type": disease_type})
     try:
         print('requesting with data'+data)
-        result = requests.get("http://3.111.38.153:5000/query", data=data)
+        # result = requests.get("http://3.111.38.153/query", data=data)
+        result = requests.get("http://127.0.0.1:5000/query", data=data)
     except Exception as e:
-        print(e)
+        print(f'Error connecting to web server: {str(e)}')
 
 
 if result:
+
     result = result.json()
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Causes", "Symptoms", "Remedies", "Harmful foods", "Beneficiary foods"])
 
