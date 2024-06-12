@@ -47,7 +47,7 @@ if find:
     data = json.dumps({"disease_name": disease_name.lower(), "disease_type": disease_type})
     try:
         print('requesting with data'+data)
-        result = requests.get("http://127.0.0.1:5000/query", data=data)
+        result = requests.get("http://3.111.38.153:5000/query", data=data)
     except Exception as e:
         print(e)
 
